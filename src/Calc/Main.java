@@ -1,27 +1,30 @@
+package Calc;
+
 import java.io.DataInputStream;
 import java.io.EOFException;
 import java.io.IOException;
-import java.io.Serializable;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.*;
+import java.util.function.Function;
 
 public class Main {
-//    static class Message implements Serializable {
-//        private int size;
-//        private byte[] data;
-//
-//        public Message( int sz, byte[] _data){
-//            size = sz;
-//            data = _data;
-//        }
-//
-//        @Override
-//        public String toString(){
-//            return "Message(size = " + size + ") ";
-//        }
-//    }
 
     public static void main( String[] args ) {
+
+        Queue queue = new LinkedList();
+
+        Function<Double[][] , Double> plus = MathCalcMoi::plus;
+
+        HashMap<String, Function<Double[][] , Double>> mathOperators = new HashMap<>();
+        mathOperators.put("+", plus);
+
+        Stack stackMathOp = new Stack();
+        Stack stackNumb = new Stack();
+
+        Double out = 0.0;
+
+        Thread jthread = new JThread("first", queue, mathOperators, stackMathOp, stackNumb, out);
 
         while (true) {
             Socket socket = null;
@@ -40,10 +43,7 @@ public class Main {
             while (true) {
                 try {
                     String value = in.readUTF();
-                    System.out.println("это что надо " + value);
-                    //byte[] data = in.readNBytes(size);
-                    //Message msg = new Message();
-                    // System.out.println("Data resieved " + msg.toString());
+                    queue.add(value);
                 } catch (EOFException e) {
                     System.out.println("Socket is connect? = " + socket.isConnected());
                     break;
