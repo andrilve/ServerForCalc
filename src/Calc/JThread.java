@@ -24,6 +24,7 @@ public class JThread extends Thread {
 
     public void run(){
         while (true){
+            //System.out.println("очередь" + queue.size());
             if (queue.size() > 0){
                 if (mathOperator.containsKey(queue.element())){
                     stackMathOp.push(queue.element());

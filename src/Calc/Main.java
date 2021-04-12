@@ -25,6 +25,7 @@ public class Main {
         Double out = 0.0;
 
         Thread jthread = new JThread("first", queue, mathOperators, stackMathOp, stackNumb, out);
+        //jthread.start();
 
         while (true) {
             Socket socket = null;
@@ -35,15 +36,19 @@ public class Main {
                 socket = serverSocket.accept();
 
                 System.out.println("New incoming connecion from " + socket.getInetAddress() + " port " + socket.getPort());
+
                 in = new DataInputStream(socket.getInputStream());
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
+            jthread.start();
+
             while (true) {
                 try {
                     String value = in.readUTF();
                     queue.add(value);
+                    System.out.println(queue.size());
                 } catch (EOFException e) {
                     System.out.println("Socket is connect? = " + socket.isConnected());
                     break;
@@ -52,5 +57,6 @@ public class Main {
                 }
             }
         }
+
     }
 }
