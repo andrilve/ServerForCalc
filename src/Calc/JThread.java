@@ -8,12 +8,13 @@ import java.util.function.Function;
 public class JThread extends Thread {
 
     private final HashMap<String, Function<Double[][] , Double>> mathOperator;
-    private final Queue queue;
-    private Stack stackMathOp;
-    private Stack stackNumb;
+    private final Stack<String> stackMathOp;
+    private final Stack<String> stackNumb;
+
+    public Queue<String> queue;
     private Double out;
 
-    public JThread(String name, Queue queue, HashMap mathOperators, Stack stackMathOp, Stack stackNumb, Double out){
+    public JThread(String name, Queue<String> queue, HashMap<String, Function<Double[][] , Double>> mathOperators, Stack<String> stackMathOp, Stack<String> stackNumb, Double out){
         super(name);
         this.queue = queue;
         this.mathOperator = mathOperators;
@@ -23,25 +24,42 @@ public class JThread extends Thread {
     }
 
     public void run(){
-        while (true){
-            //System.out.println("очередь" + queue.size());
-            if (queue.size() > 0){
-                if (mathOperator.containsKey(queue.element())){
-                    stackMathOp.push(queue.element());
+
+        Thread current = Thread.currentThread();
+
+        boolean flag = true;
+        while (flag){
+            if(!current.isInterrupted()) {
+                try {
+                    Thread.sleep(1000);
+                } catch (InterruptedException e) {
+                    System.out.println("Работа потока была прервана");
+                    flag = false;
+                    break;
                 }
-                else {
-                    stackNumb.push(queue.element());
-                    while (stackNumb.size() > 1){
-                        double secondValue = (double) stackNumb.pop();
-                        double firstValue = (double) stackNumb.pop();
-                        String mathOp = (String) stackMathOp.pop();
-                        if ( mathOp == "+"){
-                            Double[][] twoDimArray = new Double[1][1];
-                            System.out.println(mathOperator.get("+").apply(twoDimArray));
+            }
+           String elementQueue = queue.poll();
+            if (elementQueue != null) {
+                //System.out.println("очередь" + elementQueue);
+                if (mathOperator.containsKey(elementQueue)) {
+                    stackMathOp.push(elementQueue);
+                    //System.out.println("знак+");
+                } else {
+                    stackNumb.push(elementQueue);
+                    while (stackNumb.size() > 1) {
+                        double secondValue = Double.parseDouble(stackNumb.pop());
+                        double firstValue = Double.parseDouble(stackNumb.pop());
+                        String mathOp = stackMathOp.pop();
+                        if (mathOp.equals("+")) {
+                            Double[][] twoDimArray = new Double[1][2];
+                            twoDimArray[0][0] = firstValue;
+                            twoDimArray[0][1] = secondValue;
+                            out = mathOperator.get("+").apply(twoDimArray);
+                            Out.otpravitDannuu(out);
+                            stackNumb.push(String.valueOf(out));
                             //stackNumb.push(MathCalcMoi.plus(firstValue, secondValue));
                         }
                     }
-
                 }
             }
         }
