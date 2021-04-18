@@ -1,7 +1,6 @@
 package Calc;
 
 import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.EOFException;
 import java.io.IOException;
 import java.net.ServerSocket;
@@ -17,18 +16,18 @@ public class Main {
 
         Queue<String> queue = new LinkedList<>();
 
-        Function<Double[][] , Double> plus = MathCalcMoi::plus;
+        Function<Double[] , Double> plus        = MathCalc::plus;
+        Function<Double[] , Double> minus       = MathCalc::minus;
+        Function<Double[] , Double> multiplying = MathCalc::multiplying;
+        Function<Double[] , Double> division    = MathCalc::divisionTrue;
 
-        HashMap<String, Function<Double[][] , Double>> mathOperators = new HashMap<>();
+        HashMap<String, Function<Double[] , Double>> mathOperators = new HashMap<>();
         mathOperators.put("+", plus);
+        mathOperators.put("-", minus);
+        mathOperators.put("*", multiplying);
+        mathOperators.put("/", division);
 
-        Stack<String> stackMathOp = new Stack<>();
-        Stack<String> stackNumb = new Stack<>();
-
-        Double out = 0.0;
-
-        Thread jthread = new JThread("first", queue, mathOperators, stackMathOp, stackNumb, out);
-        //jthread.start();
+        Thread jthread = new JThread(queue, mathOperators);
 
         while (true) {
 
@@ -43,6 +42,7 @@ public class Main {
                 System.out.println("New incoming connecion from " + socket.getInetAddress() + " port " + socket.getPort());
 
                 in = new DataInputStream(socket.getInputStream());
+                //добавить in.close
             } catch (IOException e) {
                 e.printStackTrace();
             }

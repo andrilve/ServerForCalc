@@ -1,9 +1,11 @@
 package Calc;
 
+
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-
+//Перемеименовать сенд
+//убрать статик - создавать объекты
 public class Out {
     private static Socket socket;
 
