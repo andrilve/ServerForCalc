@@ -10,92 +10,92 @@ public class JThread extends Thread {
     private final HashMap<String, Function<Double[], Double>> mathOperator;
     public Queue<String> queue;
     private Double out;
-    public String equalSign = "=";
+    private Thread current;
 
-    public JThread( Queue<String> queue, HashMap<String, Function<Double[], Double>> mathOperators ) {
+    private String equalSign = "=";
+    private String squareSign = "^2";
+    private String openBrace = "(";
+    private String closeBrace = ")";
+
+    Function<Double[], Double> plus = MathCalc::plus;
+    Function<Double[], Double> minus = MathCalc::minus;
+    Function<Double[], Double> multiplying = MathCalc::multiplying;
+    Function<Double[], Double> division = MathCalc::divisionTrue;
+    Function<Double[], Double> square = MathCalc::square;
+
+    public JThread( Queue<String> queue ) {
         this.queue = queue;
+        HashMap<String, Function<Double[], Double>> mathOperators = new HashMap<>();
         this.mathOperator = mathOperators;
+
+        mathOperators.put("+", plus);
+        mathOperators.put("-", minus);
+        mathOperators.put("*", multiplying);
+        mathOperators.put("/", division);
+        mathOperators.put(squareSign, square);
     }
 
     public void run() {
 
-        Thread current = Thread.currentThread();
+        this.current = Thread.currentThread();
 
+        HashMap<String, Integer> signH = new HashMap<>();
+        signH.put(closeBrace, 5);
+        signH.put(equalSign, 6);
+        signH.put("(", 4);
+        signH.put(squareSign, 3);
+        signH.put("*", 2);
+        signH.put("/", 2);
+        signH.put("+", 1);
+        signH.put("-", 1);
+
+        //1st wile - if algoritm over to restart
         while (true) {
-            //остоновка потока после завершения main
-            if (!current.isInterrupted()) {
+            if (current.isInterrupted()) {
+                System.out.println("Работа потока была прервана");
+                break;
+            }
+            else{
                 try {
-                    Thread.sleep(1000);
+                    out = doAlgoritm(queue, signH);
                 } catch (InterruptedException e) {
-                    System.out.println("Работа потока была прервана");
-                    break;
+                    e.printStackTrace();
                 }
             }
-
-            HashMap<String, Integer> signH = new HashMap<>();
-            signH.put("(", 3);
-            signH.put(")", 4);
-            signH.put("=", 5);
-            signH.put("*", 2);
-            signH.put("/", 2);
-            signH.put("+", 1);
-            signH.put("-", 1);
-
-            //if (queue.size() > 0) {
-            out = doAlgoritm(queue, signH, 1);
-                //doSomething()
-                //System.out.println("очередь" + elementQueue);
-                //if (mathOperator.containsKey(elementQueue)) {
-                    //stackMathOp.push(elementQueue);
-                    //System.out.println("знак+");
-                //} else {
-                   // stackNumb.push(elementQueue);
-                   // while (stackNumb.size() > 1) {
-                       // double secondValue = Double.parseDouble(stackNumb.pop());
-                        //double firstValue = Double.parseDouble(stackNumb.pop());
-                        //String mathOp = stackMathOp.pop();
-                        //if (mathOp.equals("+")) {
-                           // Double[][] twoDimArray = new Double[1][2];
-                            //twoDimArray[0][0] = firstValue;
-                           // twoDimArray[0][1] = secondValue;
-                            //out = mathOperator.get("+").apply(twoDimArray);
-                            //Out.otpravitDannuu(out);
-                            //stackNumb.push(String.valueOf(out));
-                            //stackNumb.push(MathCalcMoi.plus(firstValue, secondValue));
-                       // }
-                   // }
-               // }
-            //}
         }
     }
 
-    public Double doAlgoritm(Queue<String> queue, HashMap<String, Integer> signH, int count) {
+    public Double doAlgoritm( Queue<String> queue, HashMap<String, Integer> signH) throws InterruptedException {
 
-        Stack<Double> stackNumb = new Stack<>();
+        Stack<Double> numStack = new Stack<>();
         Stack<String> stackSigne = new Stack<>();
 
-        Integer priority = null;
+        int size = 0;
+        Integer priority;
 
-        boolean flag = true;
-        while(flag){
-            System.out.println("Да схерли что происходит");
+        /*2nd while - do until = */
+        while (true) {
+            Thread.sleep(2000);
             while (queue.size() > 0) {
-                System.out.println("может ты один раз попала и больше попадать не хочешь?");
+                //System.out.println("может ты один раз попала и больше попадать не хочешь?");
                 String value = queue.poll();
                 priority = signH.get(value);
                 if (priority != null) {
                     /* the sign stack is empty, just put first sign to it */
-                    if (stackSigne.size() == 0) {
+                    if (stackSigne.size() == 0 && !value.equals(squareSign) && !value.equals(openBrace)) {
                         stackSigne.push(value);
                     }
                     /* we start calculating of value in brackets separately*/
-                    else if (priority == signH.get("(")) {
-                        stackNumb.push(doAlgoritm(queue, signH, count + 1));
+                    else if (priority == signH.get(openBrace)) {
+                        numStack.push(doAlgoritm(queue, signH));
                     }
                     /* the end of expression, the result should be provided */
-                    else if (priority == signH.get(")") || priority == signH.get(equalSign)) {
-                        calculate(stackNumb, stackSigne);
-                        return stackNumb.pop();
+                    else if (priority == signH.get(closeBrace) || priority == signH.get(equalSign)) {
+                        calculate(numStack, stackSigne);
+                        return numStack.pop();
+                    }
+                    else if(value.equals(squareSign)){
+                        calculateSquare( numStack);
                     }
                     /* the new operator have higher priority, put it to stack */
                     else if (priority > signH.get(stackSigne.peek())) {
@@ -103,47 +103,45 @@ public class JThread extends Thread {
                     }
                     /* the previous operator has higher priority and can be executed as other operators with same priority*/
                     else {
-                        while (stackNumb.size() > 1 && priority <= signH.get(stackSigne.peek())) {
-                            Double secondValue = stackNumb.pop();
-                            Double firstValue = stackNumb.pop();
-                            String signe = stackSigne.pop();
-                            out = execute(firstValue, secondValue, signe);
-                            stackNumb.push(out);
-                            System.out.println("какого хрена ты не работаешь");
-                            Out.otpravitDannuu(out);
+                        while (numStack.size() > 1 && priority <= signH.get(stackSigne.peek())) {
+                            Double[] operands = new Double[2];
+                            operands[1] = numStack.pop();
+                            operands[0] = numStack.pop();
+                            String sign = stackSigne.pop();
+                            out = mathOperator.get(sign).apply(operands);
+                            numStack.push(out);
+                            OutputStream otpravit = new OutputStream();
+                            otpravit.otpravitDannuu(out);
                         }
                         stackSigne.push(value);
                     }
                 } else {
-                    stackNumb.push(Double.parseDouble(value));
+                    numStack.push(Double.parseDouble(value));
                 }
             }
         }
-
-        return null;
     }
 
     private void calculate( Stack<Double> numStack, Stack<String> signStack ) {
         while (numStack.size() > 1) {
-            Double secondValue = numStack.pop();
-            Double firstValue = numStack.pop();
+            Double[] operands = new Double[2];
+            operands[1] = numStack.pop();
+            operands[0] = numStack.pop();
             String sign = signStack.pop();
-            out = execute(firstValue, secondValue, sign);
+            out = mathOperator.get(sign).apply(operands);
+            //out = execute(firstValue, secondValue, sign);
             numStack.push(out);
-            Out.otpravitDannuu(out);
+            OutputStream otpravit = new OutputStream();
+            otpravit.otpravitDannuu(out);
         }
     }
 
-    private static Double execute( Double firstNum, Double secondNum, String operSign ) {
-        if (operSign.equals("+")) {
-            return (firstNum + secondNum);
-        } else if (operSign.equals("-")) {
-            return (firstNum - secondNum);
-        } else if (operSign.equals("*")) {
-            return (firstNum * secondNum);
-        } else if (operSign.equals("/")) {
-            return (firstNum / secondNum);
-        }
-        return null;
+    private void calculateSquare( Stack<Double> numStack) {
+        Double[] operands = new Double[1];
+        operands[0] = numStack.pop();
+        out = mathOperator.get(squareSign).apply(operands);
+        numStack.push(out);
+        OutputStream otpravit = new OutputStream();
+        otpravit.otpravitDannuu(out);
     }
 }

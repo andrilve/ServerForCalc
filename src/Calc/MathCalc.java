@@ -39,4 +39,8 @@ public final class MathCalc {
         }
     }
 
+    public static Double square( Double[] arrayNumbers ){
+        return Math.pow(arrayNumbers[0],2);
+    }
+
 }

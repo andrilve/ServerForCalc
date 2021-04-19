@@ -1,24 +1,24 @@
 package Calc;
 
-
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
-//Перемеименовать сенд
-//убрать статик - создавать объекты
-public class Out {
+
+public class OutputStream {
     private static Socket socket;
 
     public static void setSocket( Socket socket ) {
-        Out.socket = socket;
+        OutputStream.socket = socket;
     }
 
-    public static void otpravitDannuu( Double value){
+    public void otpravitDannuu( Double value){
         try {
             if(!socket.isOutputShutdown()){
                 DataOutputStream out = new DataOutputStream(socket.getOutputStream());
+                System.out.println("Я отправляю данные");
                 out.writeUTF(String.valueOf(value));
                 out.flush();
+                //out.close();
             }
         } catch (IOException e) {
             e.printStackTrace();
